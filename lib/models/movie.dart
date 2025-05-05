@@ -1,21 +1,20 @@
-// Folder structure for CineTrack:
-// lib/
-//   models/
-//   services/
-//   repositories/
-//   providers/
-//   screens/
-//   widgets/
-//
 // Creating the Movie model.
-
+// The Movie model represents a movie entity throughout the app.
+// It provides methods for JSON serialization/deserialization and database mapping.
 class Movie {
+  // Unique identifier for the movie
   final int id;
+  // Movie title
   final String title;
+  // List of genre IDs associated with the movie
   final List<int> genreIds;
+  // Average rating (vote_average from TMDB)
   final double rating;
+  // Release date as a string
   final String releaseDate;
+  // Path to the movie poster image
   final String posterPath;
+  // Overview/description of the movie
   final String overview;
 
   Movie({
@@ -28,6 +27,7 @@ class Movie {
     required this.overview,
   });
 
+  // Factory constructor to create a Movie from TMDB API JSON
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
       id: json['id'],
@@ -40,6 +40,7 @@ class Movie {
     );
   }
 
+  // Converts the Movie object to a map for database storage
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -52,6 +53,7 @@ class Movie {
     };
   }
 
+  // Factory constructor to create a Movie from a database map
   factory Movie.fromMap(Map<String, dynamic> map) {
     return Movie(
       id: map['id'],

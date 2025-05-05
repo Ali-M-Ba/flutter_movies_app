@@ -3,6 +3,9 @@ import '../repositories/movie_repository.dart';
 import '../models/movie.dart';
 import 'movie_details_screen.dart';
 
+// SearchScreen allows users to search for movies by title or genre.
+// Uses a TextField for input and displays search results in a list.
+// Results are fetched from MovieRepository and tapping a result navigates to MovieDetailsScreen.
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -14,6 +17,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
   Future<List<Movie>>? _searchResults;
 
+  // Called when the user submits a search query
   void _onSearch() {
     final query = _controller.text.trim();
     if (query.isNotEmpty) {
@@ -49,68 +53,51 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child:
-                  _searchResults == null
-                      ? const Center(
-                        child: Text('Search for movies by title or genre.'),
-                      )
-                      : FutureBuilder<List<Movie>>(
-                        future: _searchResults,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
+            // Display search results if available
+            if (_searchResults != null)
+              Expanded(
+                child: FutureBuilder<List<Movie>>(
+                  future: _searchResults,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: \\${snapshot.error}'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No results found.'));
+                    }
+                    final results = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: results.length,
+                      itemBuilder: (context, index) {
+                        final movie = results[index];
+                        return ListTile(
+                          leading:
+                              movie.posterPath.isNotEmpty
+                                  ? Image.network(
+                                    'https://image.tmdb.org/t/p/w92${movie.posterPath}',
+                                    width: 50,
+                                    fit: BoxFit.cover,
+                                  )
+                                  : Container(width: 50, color: Colors.grey),
+                          title: Text(movie.title),
+                          subtitle: Text('Rating: \\${movie.rating}'),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) =>
+                                        MovieDetailsScreen(movieId: movie.id),
+                              ),
                             );
-                          } else if (snapshot.hasError) {
-                            return Center(
-                              child: Text('Error: \\${snapshot.error}'),
-                            );
-                          } else if (!snapshot.hasData ||
-                              snapshot.data!.isEmpty) {
-                            return const Center(
-                              child: Text('No results found.'),
-                            );
-                          }
-                          final movies = snapshot.data!;
-                          return ListView.builder(
-                            itemCount: movies.length,
-                            itemBuilder: (context, index) {
-                              final movie = movies[index];
-                              return ListTile(
-                                leading:
-                                    movie.posterPath.isNotEmpty
-                                        ? Image.network(
-                                          'https://image.tmdb.org/t/p/w92${movie.posterPath}',
-                                          width: 50,
-                                          fit: BoxFit.cover,
-                                        )
-                                        : Container(
-                                          width: 50,
-                                          color: Colors.grey,
-                                        ),
-                                title: Text(movie.title),
-                                subtitle: Text(
-                                  'Release: \\${movie.releaseDate}',
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => MovieDetailsScreen(
-                                            movieId: movie.id,
-                                          ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
-            ),
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
           ],
         ),
       ),

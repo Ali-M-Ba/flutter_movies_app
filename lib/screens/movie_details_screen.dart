@@ -1,19 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../models/movie.dart';
 import '../providers/watchlist_provider.dart';
 import '../repositories/movie_repository.dart';
 
-class MovieDetailsScreen extends StatelessWidget {
+// MovieDetailsScreen shows detailed information for a selected movie.
+// Fetches movie details from MovieRepository and displays them.
+// Integrates with WatchlistProvider to allow adding/removing the movie from the watchlist.
+class MovieDetailsScreen extends StatefulWidget {
   final int movieId;
   const MovieDetailsScreen({super.key, required this.movieId});
+
+  @override
+  State<MovieDetailsScreen> createState() => _MovieDetailsScreenState();
+}
+
+class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
+  double _userRating = 3.0;
+  bool _isSubmitting = false;
+  String? _submitMessage;
+  late Future<Movie> _movieFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _movieFuture = MovieRepository().getMovieDetails(widget.movieId);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Movie Details')),
       body: FutureBuilder<Movie>(
-        future: MovieRepository().getMovieDetails(movieId),
+        future: _movieFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -53,6 +73,7 @@ class MovieDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(movie.overview),
                       const SizedBox(height: 24),
+                      // Watchlist button uses Provider and FutureBuilder to check state
                       Consumer<WatchlistProvider>(
                         builder: (context, provider, child) {
                           return FutureBuilder<bool>(
@@ -83,6 +104,76 @@ class MovieDetailsScreen extends StatelessWidget {
                           );
                         },
                       ),
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Rate this movie:',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      RatingBar.builder(
+                        initialRating: _userRating,
+                        minRating: 0.5,
+                        direction: Axis.horizontal,
+                        allowHalfRating: true,
+                        itemCount: 10,
+                        itemSize: 22, // Make stars smaller
+                        itemPadding: const EdgeInsets.symmetric(
+                          horizontal: 1.0,
+                        ),
+                        itemBuilder:
+                            (context, _) =>
+                                const Icon(Icons.star, color: Colors.amber),
+                        onRatingUpdate: (rating) {
+                          setState(() {
+                            _userRating = rating;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _isSubmitting
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                            onPressed: () async {
+                              setState(() {
+                                _isSubmitting = true;
+                                _submitMessage = null;
+                              });
+                              try {
+                                final success = await MovieRepository()
+                                    .rateMovie(movie.id, _userRating);
+                                setState(() {
+                                  _submitMessage =
+                                      success
+                                          ? 'Thank you for rating!'
+                                          : 'Failed to submit rating.';
+                                });
+                              } catch (e) {
+                                setState(() {
+                                  _submitMessage = 'Error: \\${e.toString()}';
+                                });
+                              } finally {
+                                setState(() {
+                                  _isSubmitting = false;
+                                });
+                              }
+                            },
+                            child: const Text('Submit Rating'),
+                          ),
+                      if (_submitMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _submitMessage!,
+                          style: TextStyle(
+                            color:
+                                _submitMessage == 'Thank you for rating!'
+                                    ? Colors.green
+                                    : Colors.red,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
