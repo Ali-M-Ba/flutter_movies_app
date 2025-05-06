@@ -19,11 +19,6 @@ class MovieRepository {
     return movies;
   }
 
-  // Get trending movies from local cache (used for offline mode)
-  Future<List<Movie>> getCachedTrendingMovies() async {
-    return await _dbService.getAllMovies();
-  }
-
   // Fetch movie details from TMDB by ID
   Future<Movie> getMovieDetails(int movieId) async {
     return await _tmdbService.fetchMovieDetails(movieId);
@@ -37,5 +32,15 @@ class MovieRepository {
   // Rates a movie by delegating to the TMDBService
   Future<bool> rateMovie(int movieId, double rating) async {
     return await _tmdbService.rateMovie(movieId, rating);
+  }
+
+  // Get trending movies from local cache (used for offline mode)
+  Future<List<Movie>> getCachedTrendingMovies() async {
+    return await _dbService.getAllMovies();
+  }
+
+  // Gets a detailed cached movie by its ID from the local database. Returns null if not found.
+  Future<Movie?> getCachedMovieDetails(int movieId) async {
+    return await _dbService.getMovieById(movieId);
   }
 }

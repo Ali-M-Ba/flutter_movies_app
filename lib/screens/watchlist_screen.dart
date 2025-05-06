@@ -30,10 +30,19 @@ class WatchlistScreen extends StatelessWidget {
                           'https://image.tmdb.org/t/p/w92${movie.posterPath}',
                           width: 50,
                           fit: BoxFit.cover,
+                          errorBuilder:
+                              (context, error, stackTrace) => Container(
+                                width: 50,
+                                height: 75,
+                                color: Colors.grey,
+                              ),
                         )
-                        : Container(width: 50, color: Colors.grey),
-                title: Text(movie.title),
-                subtitle: Text('Rating: \\${movie.rating}'),
+                        : Container(width: 50, height: 75, color: Colors.grey),
+                title: Text(
+                  movie.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text('⭐ Rating: ${movie.rating.toStringAsFixed(1)}'),
                 onTap: () {
                   Navigator.push(
                     context,

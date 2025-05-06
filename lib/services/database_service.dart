@@ -106,4 +106,19 @@ class DatabaseService {
     );
     return maps.isNotEmpty;
   }
+
+  // Gets a single movie by its ID from the local cache (movies table)
+  Future<Movie?> getMovieById(int movieId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'movies',
+      where: 'id = ?',
+      whereArgs: [movieId],
+    );
+    if (maps.isNotEmpty) {
+      return Movie.fromMap(maps.first);
+    } else {
+      return null;
+    }
+  }
 }

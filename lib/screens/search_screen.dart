@@ -62,7 +62,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: \\${snapshot.error}'));
+                      return Center(child: Text('Error: check your internet connection.'));
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(child: Text('No results found.'));
                     }
@@ -80,8 +80,13 @@ class _SearchScreenState extends State<SearchScreen> {
                                     fit: BoxFit.cover,
                                   )
                                   : Container(width: 50, color: Colors.grey),
-                          title: Text(movie.title),
-                          subtitle: Text('Rating: \\${movie.rating}'),
+                          title: Text(
+                            movie.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '⭐ Rating: ${movie.rating.toStringAsFixed(1)}',
+                          ),
                           onTap: () {
                             Navigator.push(
                               context,

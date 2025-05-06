@@ -25,7 +25,23 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _movieFuture = MovieRepository().getMovieDetails(widget.movieId);
+    _movieFuture = _loadMovieWithFallback(widget.movieId);
+  }
+
+  Future<Movie> _loadMovieWithFallback(int movieId) async {
+    try {
+      // Try to fetch from network
+      return await MovieRepository().getMovieDetails(movieId);
+    } catch (e) {
+      // On error (e.g., no internet), try to fetch from cache
+      final cached = await MovieRepository().getCachedMovieDetails(movieId);
+      if (cached != null) {
+        return cached;
+      } else {
+        // Rethrow if not found in cache
+        throw Exception('Movie not found (offline and not cached)');
+      }
+    }
   }
 
   @override
@@ -52,6 +68,9 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                       'https://image.tmdb.org/t/p/w500${movie.posterPath}',
                       height: 400,
                       fit: BoxFit.cover,
+                      errorBuilder:
+                          (context, error, stackTrace) =>
+                              Container(height: 400, color: Colors.grey),
                     )
                     : Container(height: 400, color: Colors.grey),
                 Padding(
@@ -67,11 +86,11 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text('Release Date: \\${movie.releaseDate}'),
+                      Text('📅 Release Date: ${movie.releaseDate}'),
                       const SizedBox(height: 8),
-                      Text('Rating: \\${movie.rating}'),
+                      Text('⭐ Rating: ${movie.rating.toStringAsFixed(1)}'),
                       const SizedBox(height: 16),
-                      Text(movie.overview),
+                      Text('🔎 Overview: ${movie.overview}'),
                       const SizedBox(height: 24),
                       // Watchlist button uses Provider and FutureBuilder to check state
                       Consumer<WatchlistProvider>(
@@ -106,7 +125,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                       ),
                       const SizedBox(height: 32),
                       const Text(
-                        'Rate this movie:',
+                        '🤩 Rate this movie:',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -118,10 +137,10 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                         minRating: 0.5,
                         direction: Axis.horizontal,
                         allowHalfRating: true,
-                        itemCount: 10,
-                        itemSize: 22, // Make stars smaller
+                        itemCount: 5,
+                        itemSize: 60, // Make stars smaller
                         itemPadding: const EdgeInsets.symmetric(
-                          horizontal: 1.0,
+                          horizontal: 5.0,
                         ),
                         itemBuilder:
                             (context, _) =>
@@ -152,7 +171,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                                 });
                               } catch (e) {
                                 setState(() {
-                                  _submitMessage = 'Error: \\${e.toString()}';
+                                  _submitMessage =
+                                      'Error: check your internet connection.';
                                 });
                               } finally {
                                 setState(() {

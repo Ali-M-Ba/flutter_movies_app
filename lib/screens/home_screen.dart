@@ -20,7 +20,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     // Fetch trending movies when the screen is initialized
-    _trendingMovies = MovieRepository().fetchTrendingMovies();
+    _loadTrendingMovies();
+  }
+
+  void _loadTrendingMovies() {
+    _trendingMovies = MovieRepository().fetchTrendingMovies().catchError((
+      error,
+    ) async {
+      // On error (e.g., offline), load from cache
+      final cached = await MovieRepository().getCachedTrendingMovies();
+      if (cached.isNotEmpty) {
+        return cached;
+      } else {
+        // Rethrow if no cache is available
+        throw error;
+      }
+    });
   }
 
   @override
@@ -49,10 +64,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           'https://image.tmdb.org/t/p/w92${movie.posterPath}',
                           width: 50,
                           fit: BoxFit.cover,
+                          errorBuilder:
+                              (context, error, stackTrace) => Container(
+                                width: 50,
+                                height: 75,
+                                color: Colors.grey,
+                              ),
                         )
-                        : Container(width: 50, color: Colors.grey),
-                title: Text(movie.title),
-                subtitle: Text('Rating: \\${movie.rating}'),
+                        : Container(width: 50, height: 75, color: Colors.grey),
+                title: Text(
+                  movie.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text('⭐ Rating: ${movie.rating.toStringAsFixed(1)}'),
                 onTap: () {
                   // Navigate to details screen with selected movie ID
                   Navigator.push(
